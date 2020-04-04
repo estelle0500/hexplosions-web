@@ -1,17 +1,29 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Hexplosions"/>
+    <Grid></Grid>
   </div>
 </template>
+
+<style scoped>
+#app {
+  align-self: stretch;
+  overflow: hidden;
+}
+</style>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import HelloWorld from './components/HelloWorld.vue'
+import GameSettings from './components/GameSettings.vue'
+import Grid from './components/Grid.vue'
+import VueKonva from 'vue-konva'
+
+Vue.use(VueKonva)
 
 @Component({
   components: {
-    HelloWorld
+    GameSettings,
+    Grid
   }
 })
 export default class App extends Vue {}
