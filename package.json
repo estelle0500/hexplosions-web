@@ -14,7 +14,8 @@
     "vue": "^2.6.11",
     "vue-class-component": "^7.0.2",
     "vue-konva": "^2.1.1",
-    "vue-property-decorator": "^8.3.0"
+    "vue-property-decorator": "^8.3.0",
+    "vue-resize-directive": "git+https://github.com/ELFoglalt/Vue.resize.git#type-defs"
   },
   "devDependencies": {
     "@types/jest": "^24.0.19",
