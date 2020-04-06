@@ -1,5 +1,5 @@
 <template>
-   <div id="stage_container" v-resize.initial="ignoreResize" v-resize="onResize">
+   <div id="stage_container" v-resize="onResize">
     <v-stage :config="configKonva" ref="stage">
         <v-layer>
         <v-regular-polygon v-for="polygon in polygons" :key="polygon.id" :config="polygon"
@@ -38,7 +38,7 @@ class HexagonCell {
       this.id = id
     }
     mouseover () {
-      this.strokeWidth = 5
+      this.strokeWidth = 6
     }
     mouseleave () {
       this.strokeWidth = 2
@@ -56,17 +56,21 @@ export default class Grid extends Vue {
     height: 0
   }
   polygons: HexagonCell[] = []
+  numPolygons: number = 0
+
   @Prop({ default: 5 })
   gridSize!: number
-  ignoreResize () {
 
-  }
   onResize () {
-    console.log(this.$el.clientHeight)
     this.configKonva.width = this.$el.clientWidth
     this.configKonva.height = this.$el.clientHeight
-    this.polygons = this.CreateGridMiddleColumn()
+
+    const middleColumn: HexagonCell[] = this.CreateGridMiddleColumn()
+    const leftHalf: HexagonCell[] = this.CreateGridLeftHalf(middleColumn)
+    const rightHalf: HexagonCell[] = this.CreateGridRightHalf(middleColumn)
+    this.polygons = leftHalf.concat(middleColumn).concat(rightHalf)
   }
+
   CreateGridMiddleColumn (): HexagonCell[] {
     const kHexCellHalfHeight = HexagonCell.defaultRadius * Math.sin(Math.PI / 3.0)
     const kHexCellHeight = kHexCellHalfHeight * 2
@@ -76,9 +80,58 @@ export default class Grid extends Vue {
     for (let i = 0; i < this.gridSize; ++i) {
       let x = this.configKonva.width / 2.0
       let y = topCellY + kHexCellHeight * i
-      middleColumn.push(new HexagonCell(i, x, y))
+      middleColumn.push(new HexagonCell(this.numPolygons, x, y))
+      ++this.numPolygons
     }
     return middleColumn
+  }
+
+  CreateGridLeftHalf (middleColumn: HexagonCell[]): HexagonCell[] {
+    let leftHalf: HexagonCell[][] = [middleColumn]
+    const kHexCellHalfHeight = HexagonCell.defaultRadius * Math.sin(Math.PI / 3.0)
+    const kHexCellHeight = kHexCellHalfHeight * 2
+
+    for (let i = 1; i < this.gridSize; i++) {
+      let newColumn: HexagonCell[] = []
+
+      for (const prevColCell of leftHalf[0]) {
+        const y = prevColCell.y + kHexCellHalfHeight
+        const x = prevColCell.x - kHexCellHeight
+        newColumn.push(new HexagonCell(this.numPolygons, x, y))
+        ++this.numPolygons
+      }
+
+      // Each column has one fewer cell than the previous column
+      newColumn.pop()
+      leftHalf.unshift(newColumn)
+    }
+
+    leftHalf.pop()
+    return leftHalf.flat()
+  }
+
+  CreateGridRightHalf (middleColumn: HexagonCell[]): HexagonCell[] {
+    let rightHalf: HexagonCell[][] = [middleColumn]
+    const kHexCellHalfHeight = HexagonCell.defaultRadius * Math.sin(Math.PI / 3.0)
+    const kHexCellHeight = kHexCellHalfHeight * 2
+
+    for (let i = 1; i < this.gridSize; i++) {
+      let newColumn: HexagonCell[] = []
+
+      for (const prevColCell of rightHalf[0]) {
+        const y = prevColCell.y + kHexCellHalfHeight
+        const x = prevColCell.x + kHexCellHeight
+        newColumn.push(new HexagonCell(this.numPolygons, x, y))
+        ++this.numPolygons
+      }
+
+      // Each column has one fewer cell than the previous column
+      newColumn.pop()
+      rightHalf.unshift(newColumn)
+    }
+
+    rightHalf.pop()
+    return rightHalf.flat()
   }
 }
 </script>
