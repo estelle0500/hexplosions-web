@@ -7,11 +7,6 @@
 </template>
 
 <style scoped>
-@font-face {
-    font-family: Retro;
-    src: url('../assets/reblinking.ttf');
-}
-
 #linked-title {
     font-family: Retro;
     font-size: 3em;

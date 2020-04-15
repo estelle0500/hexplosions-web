@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <Header></Header>
-    <Grid v-bind:gridSize="5" ref="grid"></Grid>
+    <Grid v-bind:gridSize="6" ref="grid"></Grid>
   </div>
 </template>
 
@@ -44,5 +44,10 @@ export default class App extends Vue {}
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+@font-face {
+    font-family: Retro;
+    src: url('assets/reblinking.ttf');
 }
 </style>
