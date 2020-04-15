@@ -19,31 +19,9 @@
 
 <script lang="ts">
 import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
+import HexagonCell from './game_elements/HexagonCell'
 // @ts-ignore
 import resize from 'vue-resize-directive'
-
-class HexagonCell {
-    sides: number = 6
-    static defaultRadius: number = 50
-    radius: number = HexagonCell.defaultRadius
-    stroke: string = 'red'
-    strokeWidth: number = 2
-    rotation: number = 30
-    x: number
-    y: number
-    id: number
-    constructor (id: number, x: number, y: number) {
-      this.x = x
-      this.y = y
-      this.id = id
-    }
-    mouseover () {
-      this.strokeWidth = 6
-    }
-    mouseleave () {
-      this.strokeWidth = 2
-    }
-}
 
 @Component({
   directives: {
@@ -56,82 +34,54 @@ export default class Grid extends Vue {
     height: 0
   }
   polygons: HexagonCell[] = []
-  numPolygons: number = 0
 
   @Prop({ default: 5 })
   gridSize!: number
 
+  mounted () {
+    this.polygons = this.CreateGrid()
+  }
+
   onResize () {
     this.configKonva.width = this.$el.clientWidth
     this.configKonva.height = this.$el.clientHeight
-
-    const middleColumn: HexagonCell[] = this.CreateGridMiddleColumn()
-    const leftHalf: HexagonCell[] = this.CreateGridLeftHalf(middleColumn)
-    const rightHalf: HexagonCell[] = this.CreateGridRightHalf(middleColumn)
-    this.polygons = leftHalf.concat(middleColumn).concat(rightHalf)
+    this.SetCellPositions()
   }
 
-  CreateGridMiddleColumn (): HexagonCell[] {
-    const kHexCellHalfHeight = HexagonCell.defaultRadius * Math.sin(Math.PI / 3.0)
-    const kHexCellHeight = kHexCellHalfHeight * 2
+  CreateGrid (): HexagonCell[] {
+    let grid: HexagonCell[] = []
 
-    let topCellY = this.configKonva.height / 2.0 - (this.gridSize - 1) * kHexCellHalfHeight
-    let middleColumn: HexagonCell[] = []
-    for (let i = 0; i < this.gridSize; ++i) {
-      let x = this.configKonva.width / 2.0
-      let y = topCellY + kHexCellHeight * i
-      middleColumn.push(new HexagonCell(this.numPolygons, x, y))
-      ++this.numPolygons
-    }
-    return middleColumn
-  }
-
-  CreateGridLeftHalf (middleColumn: HexagonCell[]): HexagonCell[] {
-    let leftHalf: HexagonCell[][] = [middleColumn]
-    const kHexCellHalfHeight = HexagonCell.defaultRadius * Math.sin(Math.PI / 3.0)
-    const kHexCellHeight = kHexCellHalfHeight * 2
-
-    for (let i = 1; i < this.gridSize; i++) {
-      let newColumn: HexagonCell[] = []
-
-      for (const prevColCell of leftHalf[0]) {
-        const y = prevColCell.y + kHexCellHalfHeight
-        const x = prevColCell.x - kHexCellHeight
-        newColumn.push(new HexagonCell(this.numPolygons, x, y))
-        ++this.numPolygons
+    // Left half
+    for (let gridX = -1; gridX > -this.gridSize; gridX--) {
+      const endY = gridX + this.gridSize - 1
+      for (let gridY = -endY; gridY <= endY; gridY += 2) {
+        grid.push(new HexagonCell({ gridX, gridY }))
       }
-
-      // Each column has one fewer cell than the previous column
-      newColumn.pop()
-      leftHalf.unshift(newColumn)
     }
 
-    leftHalf.pop()
-    return leftHalf.flat()
+    // Middle column
+    for (let gridY = 1 - this.gridSize; gridY <= this.gridSize - 1; gridY += 2) {
+      grid.push(new HexagonCell({ gridX: 0, gridY }))
+    }
+
+    // Right half
+    for (let gridX = 1; gridX < this.gridSize; gridX++) {
+      const endY = this.gridSize - gridX - 1
+      for (let gridY = -endY; gridY <= endY; gridY += 2) {
+        grid.push(new HexagonCell({ gridX, gridY }))
+      }
+    }
+    return grid
   }
 
-  CreateGridRightHalf (middleColumn: HexagonCell[]): HexagonCell[] {
-    let rightHalf: HexagonCell[][] = [middleColumn]
-    const kHexCellHalfHeight = HexagonCell.defaultRadius * Math.sin(Math.PI / 3.0)
-    const kHexCellHeight = kHexCellHalfHeight * 2
+  SetCellPositions () {
+    const stageX = this.configKonva.width / 2
+    const stageY = this.configKonva.height / 2
+    const stageCenter = { x: stageX, y: stageY }
 
-    for (let i = 1; i < this.gridSize; i++) {
-      let newColumn: HexagonCell[] = []
-
-      for (const prevColCell of rightHalf[0]) {
-        const y = prevColCell.y + kHexCellHalfHeight
-        const x = prevColCell.x + kHexCellHeight
-        newColumn.push(new HexagonCell(this.numPolygons, x, y))
-        ++this.numPolygons
-      }
-
-      // Each column has one fewer cell than the previous column
-      newColumn.pop()
-      rightHalf.unshift(newColumn)
+    for (let cell of this.polygons) {
+      cell.SetRelativePosition(stageCenter)
     }
-
-    rightHalf.pop()
-    return rightHalf.flat()
   }
 }
 </script>
