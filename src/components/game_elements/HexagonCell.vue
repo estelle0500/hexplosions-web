@@ -1,7 +1,7 @@
 <template>
   <div>
-    <v-regular-polygon :config="displayConfig" @click="clicked"
-      @mouseover="mouseover" @mouseleave="mouseleave">
+    <v-regular-polygon :config="displayConfig" @click="clicked()" @tap="clicked()"
+      @mouseover="mouseover()" @mouseleave="mouseleave()">
     </v-regular-polygon>
     <v-text :config="textDisplayConfig" ref="atomsDisplay">
     </v-text>
@@ -50,6 +50,8 @@ export default class HexagonCell extends Vue {
     gridX!: number
     @Prop()
     gridY!: number
+    @Prop({ default: 6 })
+    maxAtoms!: number
     @Prop()
     playerTurn!: number
 
@@ -87,23 +89,35 @@ export default class HexagonCell extends Vue {
         return
       }
 
-      ++this.atoms
-      this.occupyingPlayer = this.playerTurn
-      this.updateTextDisplay()
+      this.addAtom()
       this.$emit('completed-turn')
-
-      if (this.atoms >= this.displayConfig.sides) {
-        this.$emit('explode')
-      }
-
-      this.$nextTick(this.mouseover)
+      // this.$nextTick(this.mouseover)
     }
 
     isLegalMove () : boolean {
       return this.atoms === 0 || this.playerTurn === this.occupyingPlayer
     }
 
+    addAtom () {
+      ++this.atoms
+      this.occupyingPlayer = this.playerTurn
+      this.updateTextDisplay()
+
+      if (this.atoms >= this.maxAtoms) {
+        this.$emit('explode')
+      }
+    }
+
+    explode () {
+      this.atoms -= this.maxAtoms
+      this.updateTextDisplay()
+    }
+
     updateTextDisplay () {
+      if (this.atoms === 0) {
+        this.textDisplayConfig.text = ''
+        return
+      }
       this.textDisplayConfig.text = String(this.atoms)
       this.textDisplayConfig.fill = playerColors[this.occupyingPlayer]
       this.$nextTick(this.updateTextPosition)
