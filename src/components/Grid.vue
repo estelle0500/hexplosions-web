@@ -12,9 +12,15 @@
 
     <v-stage :config="configKonva" ref="stage">
       <v-layer>
-      <HexagonCell ref="gridCells" v-for="[index, cell] of gridCells.entries()" :key="index"
-        v-bind:gridX="cell.gridX" v-bind:gridY="cell.gridY" v-bind:playerTurn="playerTurn"
-        v-on:completed-turn="updateTurns" v-on:illegal-move="onMoveError">
+      <HexagonCell ref="gridCells" v-for="[index, cell] of engine.gridLocations.entries()"
+        :key="index"
+        v-bind:gridX="cell.gridX"
+        v-bind:gridY="cell.gridY"
+        v-bind:maxAtoms="cell.numNeighbors"
+        v-bind:playerTurn="engine.playerTurn"
+        v-on:completed-turn="engine.updateTurns()"
+        v-on:explode="engine.explodeCell($refs.gridCells[index])"
+        v-on:illegal-move="onMoveError()">
       </HexagonCell>
       </v-layer>
     </v-stage>
@@ -46,6 +52,7 @@
 <script lang="ts">
 import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
 import HexagonCell from './game_elements/HexagonCell.vue'
+import Engine from './game_elements/Engine'
 import { playerColors } from './game_elements/Constants'
 // @ts-ignore
 import resize from 'vue-resize-directive'
@@ -63,10 +70,9 @@ export default class Grid extends Vue {
     width: 0,
     height: 0
   }
-  gridCells: {}[] = []
-  playerTurn = 0
   playerColors = playerColors
   hasMoveError: boolean = false
+  engine: Engine = new Engine()
 
   @Prop({ default: 5 })
   gridSize!: number
@@ -74,40 +80,18 @@ export default class Grid extends Vue {
   numPlayers!: number
 
   mounted () {
-    this.gridCells = this.createGrid()
-    setTimeout(this.setCellPositions, 0)
+    this.engine.setup(this.numPlayers, this.gridSize)
+    this.$nextTick(this.setCellPositions)
+  }
+
+  updated () {
+    this.engine.setGridCells(this.$refs.gridCells as HexagonCell[])
   }
 
   onResize () {
     this.configKonva.width = this.$el.clientWidth
     this.configKonva.height = this.$el.clientHeight
     this.setCellPositions()
-  }
-
-  createGrid (): {}[] {
-    let grid = []
-
-    // Left half
-    for (let gridX = -1; gridX > -this.gridSize; gridX--) {
-      const endY = gridX + this.gridSize - 1
-      for (let gridY = -endY; gridY <= endY; gridY += 2) {
-        grid.push({ gridX, gridY })
-      }
-    }
-
-    // Middle column
-    for (let gridY = 1 - this.gridSize; gridY <= this.gridSize - 1; gridY += 2) {
-      grid.push({ gridX: 0, gridY })
-    }
-
-    // Right half
-    for (let gridX = 1; gridX < this.gridSize; gridX++) {
-      const endY = this.gridSize - gridX - 1
-      for (let gridY = -endY; gridY <= endY; gridY += 2) {
-        grid.push({ gridX, gridY })
-      }
-    }
-    return grid
   }
 
   setCellPositions () {
@@ -120,17 +104,8 @@ export default class Grid extends Vue {
     }
   }
 
-  boom () {
-    console.log('boom')
-  }
-
-  updateTurns () {
-    ++this.playerTurn
-    this.playerTurn %= this.numPlayers
-  }
-
   opacity (playerId: number) {
-    if (playerId === this.playerTurn) {
+    if (playerId === this.engine.playerTurn) {
       return {
         opacity: 1.0
       }
