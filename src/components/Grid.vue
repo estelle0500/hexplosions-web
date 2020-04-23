@@ -1,8 +1,9 @@
 <template>
    <div id="stage_container" v-resize="onResize">
     <div id="information_display">
-      <div id="turn_display" :style="playerColor">
-        PLAYER {{ playerTurn + 1 }}'S TURN
+      <div class="turn_display" v-for="playerId of Array(numPlayers).keys()" :key="playerId"
+        :style="{ color: playerColors[playerId], ...opacity(playerId) }">
+        PLAYER {{ playerId + 1 }}'S TURN
       </div>
       <div v-if="hasMoveError" id="error_display">
       THAT CELL ISN'T OCCUPIED BY YOU!
@@ -28,10 +29,10 @@
 #information_display {
   float: left;
 }
-#turn_display {
+.turn_display {
   text-align: left;
-  padding: 10px;
-  font-size: 2em;
+  padding: 0 10px;
+  font-size: 1.7em;
   font-weight: bold;
   font-family: 'Courier New', Courier, monospace;
 }
@@ -64,11 +65,12 @@ export default class Grid extends Vue {
   }
   gridCells: {}[] = []
   playerTurn = 0
+  playerColors = playerColors
   hasMoveError: boolean = false
 
   @Prop({ default: 5 })
   gridSize!: number
-  @Prop({ default: 2 })
+  @Prop({ default: 4 })
   numPlayers!: number
 
   mounted () {
@@ -127,9 +129,15 @@ export default class Grid extends Vue {
     this.playerTurn %= this.numPlayers
   }
 
-  get playerColor () {
-    return {
-      color: playerColors[this.playerTurn]
+  opacity (playerId: number) {
+    if (playerId === this.playerTurn) {
+      return {
+        opacity: 1.0
+      }
+    } else {
+      return {
+        opacity: 0.3
+      }
     }
   }
 
