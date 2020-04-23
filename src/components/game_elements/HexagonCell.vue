@@ -12,7 +12,7 @@
 import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
 import { playerColors } from './Constants'
 
-const textMinimumSize = 14
+const textMinimumSize = 30
 const textSizeScale = 4
 const radius = 50
 const gridUnitX = radius * 1.5
@@ -37,11 +37,12 @@ export default class HexagonCell extends Vue {
       verticalAlign: 'middle',
       fill: 'red',
       text: '',
-      fontFamily: 'monospace',
+      fontFamily: 'PT Mono, monospace',
       lineHeight: 0,
       fontSize: textMinimumSize,
-      offsetX: 5,
-      offsetY: -2
+      fontStyle: 'bold',
+      offsetX: 0,
+      offsetY: 0
     }
 
     // Represents units of displacement from grid center
@@ -81,20 +82,21 @@ export default class HexagonCell extends Vue {
     }
 
     clicked () {
-      if (this.isLegalMove()) {
-        ++this.atoms
-        this.occupyingPlayer = this.playerTurn
-        this.updateTextDisplay()
-        this.$emit('completed-turn')
-
-        if (this.atoms >= this.displayConfig.sides) {
-          this.$emit('explode')
-        }
-
-        setTimeout(this.mouseover, 0)
+      if (!this.isLegalMove()) {
+        this.showErrorMessage()
         return
       }
-      this.emitErrorMessage()
+
+      ++this.atoms
+      this.occupyingPlayer = this.playerTurn
+      this.updateTextDisplay()
+      this.$emit('completed-turn')
+
+      if (this.atoms >= this.displayConfig.sides) {
+        this.$emit('explode')
+      }
+
+      this.$nextTick(this.mouseover)
     }
 
     isLegalMove () : boolean {
@@ -103,9 +105,8 @@ export default class HexagonCell extends Vue {
 
     updateTextDisplay () {
       this.textDisplayConfig.text = String(this.atoms)
-      this.textDisplayConfig.fontSize = textMinimumSize + textSizeScale * this.atoms
       this.textDisplayConfig.fill = playerColors[this.occupyingPlayer]
-      setTimeout(this.updateTextPosition, 0)
+      this.$nextTick(this.updateTextPosition)
     }
 
     updateTextPosition () {
@@ -113,7 +114,7 @@ export default class HexagonCell extends Vue {
       this.textDisplayConfig.offsetY = (this.$refs.atomsDisplay as any).getNode().height() / 2
     }
 
-    emitErrorMessage () {
+    showErrorMessage () {
       this.$emit('illegal-move')
     }
 }
