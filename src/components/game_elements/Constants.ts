@@ -1,4 +1,4 @@
-const playerColors: string[] = ['blue', 'green', 'yellow', 'pink']
+const playerColors: string[] = ['dodgerblue', 'lime', 'orange', 'magenta']
 
 export {
   playerColors
